@@ -3,27 +3,26 @@ const router = express.Router();
 const multer = require("multer");
 const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-// const storageMulter = require("../../helpers/storageMulter");
 
+const controller = require("../../controllers/admin/account.controller");
+
+const  validate  = require("../../validates/account.validate");
 cloudinary.config({ 
     cloud_name: 'ddkiaep9u', 
     api_key: '379395787439693', 
-    api_secret: 'SYubYwRxBW-nMODY-aLp0byeqN0' // Click 'View API Keys' above to copy your API secret
+    api_secret: 'SYubYwRxBW-nMODY-aLp0byeqN0' 
 });
 
 const upload = multer();
-
-const controller = require("../../controllers/admin/product.controller");
-
-
 router.get("/", controller.index);
-router.patch("/change-status/:status/:id", controller.changeStatus);
-router.patch("/change-multi", controller.changeMulti);
-router.delete("/delete/:id", controller.deleteItem);
+
 router.get("/create", controller.create);
+
+
+
 router.post(
     "/create",
-    upload.single("thumbnail"),
+    upload.single("avatar"),
     function (req, res, next) {
         if(req.file){
             let streamUpload = (req) => {
@@ -53,21 +52,11 @@ router.post(
         }   else{
             next();
 
-        }
-        
-        
+        }       
     },
+    validate.createPost,
     controller.createPost
 );
-
-router.get("/edit/:id", controller.edit);
-router.patch(
-    "/edit/:id",
-    upload.single("thumbnail"), 
-    controller.editPatch
-);
-router.get("/detail/:id", controller.detail);
-
 
 
 module.exports = router;

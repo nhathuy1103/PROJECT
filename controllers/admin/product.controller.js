@@ -5,6 +5,7 @@ const filterStatusHelper = require("../../helpers/filterStatus");
 const systemConfig = require("../../config/system");
 const searchHelper = require("../../helpers/search");
 const paginationHelper = require("../../helpers/pagination");
+const ProductCategory = require("../../models/product-category.model");
 
 
 module.exports.index = async (req, res) => {
@@ -39,8 +40,19 @@ module.exports.index = async (req, res) => {
     );
     // Hết Phân trang
 
+        // Sort
+    let sort = {};
+
+    if (req.query.sortKey && req.query.sortValue) {
+      sort[req.query.sortKey] = req.query.sortValue;
+    } else {
+      sort.position = "desc";
+    }
+    // End Sort
+
+
     const products = await Product.find(find)
-        .sort({position:"desc"})
+        .sort(sort)
         .limit(pagination.limitItems)
         .skip(pagination.skip);
     
@@ -124,8 +136,35 @@ module.exports.deleteItem = async (req, res) => {
 
 // [GET] /admin/products/create
 module.exports.create = async (req, res) => {
+  let find ={
+    deleted: false
+  };
+  const category = await ProductCategory.find(find);
+  const newCategory = createTree(category);
+  function createTree(arr, parentId = "") {
+    const tree = [];
+  
+    arr.forEach((item) => {
+      if (item.parent_id === parentId) {
+        const newItem = item;
+  
+        const children = createTree(arr, item.id); // Đệ quy gọi lại chính hàm này để tìm con của item hiện tại
+  
+        if (children.length > 0) {
+          newItem.children = children;
+        }
+  
+        tree.push(newItem); // Thêm item (và cả children nếu có) vào cây
+      }
+    });
+  
+    return tree;
+  }
+
+
   res.render("admin/pages/products/create", {
     pageTitle: "Thêm mới sản phẩm",
+    category: newCategory
   });
 };
 
@@ -149,9 +188,7 @@ module.exports.createPost = async (req, res) => {
     req.body.position = parseInt(req.body.position);
   }
 
-  if(req.file){
-    req.body.thumbnail = `/uploads/${req.file.filename}`;
-  }
+ 
   
   const product = new Product(req.body);
   await product.save();
@@ -167,11 +204,35 @@ module.exports.edit = async (req, res) => {
       _id: req.params.id
     };
     const product = await Product.findOne(find);
+    const category = await ProductCategory.find({
+      deleted: false
+    });
+    const newCategory = createTree(category);
+    function createTree(arr, parentId = "") {
+      const tree = [];
+    
+      arr.forEach((item) => {
+        if (item.parent_id === parentId) {
+          const newItem = item;
+    
+          const children = createTree(arr, item.id); // Đệ quy gọi lại chính hàm này để tìm con của item hiện tại
+    
+          if (children.length > 0) {
+            newItem.children = children;
+          }
+    
+          tree.push(newItem); // Thêm item (và cả children nếu có) vào cây
+        }
+      });
+    
+      return tree;
+    }
   
   
     res.render("admin/pages/products/edit", {
       pageTitle: "Chỉnh sửa sản phẩm",
-      product: product
+      product: product,
+      category: newCategory
     });
     
   } catch (error) {

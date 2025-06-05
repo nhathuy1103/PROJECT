@@ -100,4 +100,18 @@ Header
 .image-preview[src=""] {
   display: none;
 }
+
+
 /* End Image Preview */
+
+.header {
+  background: #f8f9fa; /* nền sáng */
+  color: #212529;       /* màu chữ tối */
+}
+
+.header .inner-logo a {
+  color: #212529;       /* chữ tối */
+  text-decoration: none;
+  font-weight: bold;
+}
+
